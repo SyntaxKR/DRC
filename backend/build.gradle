@@ -1,0 +1,51 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.3.4'
+	id 'io.spring.dependency-management' version '1.1.6'
+}
+
+group = 'com.trustping'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// 주석 달아 놓은 의존성은 직접 추가한 것
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'io.github.cdimascio:java-dotenv:5.2.2' // dotenv 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // JPA 스타터
+    implementation 'org.springframework.integration:spring-integration-mqtt:5.5.14' // MQTT 의존성
+    implementation 'org.postgresql:postgresql' // PostgreSQL 의존성
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310' // JACKSON 의존성 - TIMESTAMP 변환 위해 필요
+	implementation 'org.springframework.boot:spring-boot-starter-validation' // JAKARTA validation 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-security' // spring-security 의존성
+	implementation 'com.warrenstrange:googleauth:1.4.0' // Google OTP 의존성
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // jwt 의존성
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5' // jwt 의존성
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5' // jwt 의존성
+	compileOnly 'org.projectlombok:lombok' // lombok 의존성
+	annotationProcessor 'org.projectlombok:lombok' // lombok 의존성 2
+	implementation 'org.apache.poi:poi-ooxml:5.2.3' // apache poi 의존성
+	implementation 'org.apache.poi:poi:5.2.3' // apache poi 의존성
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
