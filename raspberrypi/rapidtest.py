@@ -9,7 +9,7 @@ import tkinter as tk
 from PIL import Image, ImageDraw, ImageFont, ImageTk, ImageOps
 import threading
 import pygame
-from server import ip, port
+from dotenv import load_dotenv
 import obd
 import random
 import matplotlib.pyplot as plt
@@ -17,24 +17,26 @@ import numpy as np
 from matplotlib.animation import FuncAnimation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
+import os
 
+load_dotenv()
 
-df = pd.read_csv("/home/drc/DRC/DRC/audi_s1.csv", sep=',')
+SERVER_IP   = os.getenv("IP", "")               
+SERVER_PORT = os.getenv("PORT", "0")            
 
+df = pd.read_csv("/home/drc/project/DRC/raspberrypi/audi_s1.csv", sep=',')
 
-# 서버 URL 설정
-url = f'http://{ip()}:{port()}/data'
+url = f"http://{SERVER_IP}:{SERVER_PORT}/data"
 
-# 데이터 구조 정의
 data = {
-    "carId": "01가1234",  # 차량 ID 설정
-    "aclPedal": 0,
-    "brkPedal": 0,
+    "carId":     "01가1234",  # 차량 ID 설정
+    "aclPedal":  0,
+    "brkPedal":  0,
     "createDate": 0,
     "driveState": " ",
-    "speed" : 0,
-    "rpm" : 0,
-    "speedChange" : 0
+    "speed":      0,
+    "rpm":        0,
+    "speedChange": 0
 }
 
 def cleanAndExit():
