@@ -90,7 +90,7 @@ brake_label.config(width=brake_img_normal.width(), height=brake_img_normal.heigh
 brake_label.place(relx=-0.04, rely=0.5, anchor="w")  # 왼쪽 중앙에 배치
 
 
-#data부분을 나중에 속도 데이터로 넣으면될꺼같음 
+#data부분을 나중에 속도 데이터로 넣으면될꺼같음 아마도? 
 text_label = tk.Label(root, text=f"현재 속도", font=font_large, bg="black", fg="white", padx=2, pady=10, width=11)
 text_label.place(relx=0.5, rely=0.3, anchor='center')
 
@@ -106,7 +106,7 @@ is_accelerating = False
 
 # MQTT 설정
 client = mqtt.Client()
-client.connect(ip(), 1222, 60)
+client.connect(SERVER_IP(), 1222, 60)
 
 sound_delay = 3  # 음성 재생 간격
 state_hold_time = 3  # 상태 유지 시간
