@@ -106,7 +106,12 @@ is_accelerating = False
 
 # MQTT 설정
 client = mqtt.Client()
-client.connect(SERVER_IP(), 1222, 60)
+
+try:
+    client.connect(SERVER_IP, int(SERVER_PORT), 60)
+    print(f"MQTT Broker에 연결됨: {SERVER_IP}:{SERVER_PORT}")
+except Exception as e:
+    print("MQTT 연결 실패:", e)
 
 sound_delay = 3  # 음성 재생 간격
 state_hold_time = 3  # 상태 유지 시간
