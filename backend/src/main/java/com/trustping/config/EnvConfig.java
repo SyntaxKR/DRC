@@ -52,5 +52,7 @@ public class EnvConfig {
 	public String getJwtSecretKey() {
 		return dotenv.get("JWT_SECRET_KEY");
 	}
+
+    public String getChaosSeed() { return dotenv.get("CHAOS_SEED");}
 }
 
