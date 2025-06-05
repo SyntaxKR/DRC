@@ -2,6 +2,7 @@ package com.trustping.service;
 
 import java.nio.charset.StandardCharsets;
 
+import com.trustping.utils.ChaosDecoder;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -10,13 +11,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.trustping.DTO.DriveLogReceiveDTO;
 import com.trustping.config.EnvConfig;
-import com.trustping.entity.DriveLog;
-import com.trustping.repository.SegmentRepository;
 
 import jakarta.annotation.PostConstruct;
 
@@ -38,7 +34,9 @@ public class DriveLogSubscribeService implements MqttCallback {
     
     @Autowired
 	private SegmentServiceImpl segmentService;
-	
+
+    @Autowired
+    private ChaosDecoder chaosDecoder;
     
     // MQTT 브로커 연결
     @PostConstruct
@@ -116,20 +114,17 @@ public class DriveLogSubscribeService implements MqttCallback {
     @Override
     public void messageArrived(String topic, MqttMessage message) throws Exception {
     	// 메시지 문자열로 변환
-    	String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
-        System.out.println("Message received on topic " + topic + ": " + payload);
-        
-        // 문자열 객체화
-		ObjectMapper objectMapper = new ObjectMapper();
-		objectMapper.registerModule(new JavaTimeModule());
-		DriveLogReceiveDTO ReceiveDriveLog = objectMapper.readValue(payload, DriveLogReceiveDTO.class);
-		
-		// 주행 정보 저장
-		driveLogStorageService.saveData(ReceiveDriveLog);
-		// 운전 점수 업데이트
-		driveScoreEvaluateService.evaluateScore(ReceiveDriveLog);
-        // Segment 업데이트
-        segmentService.updateOrCreateSegment(ReceiveDriveLog);
+        String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
+        System.out.println("Encrypted Message received on topic " + topic + ": " + payload);
+
+        try {
+            DriveLogReceiveDTO ReceiveDriveLog = chaosDecoder.decryptPayload(payload);
+            driveLogStorageService.saveData(ReceiveDriveLog);
+            driveScoreEvaluateService.evaluateScore(ReceiveDriveLog);
+            segmentService.updateOrCreateSegment(ReceiveDriveLog);
+        } catch (Exception e) {
+            System.err.println("복호화 또는 저장 중 오류: " + e.getMessage());
+        }
     }
     
     // 전송 확인 부분 전송은 안 해서 구현 X
