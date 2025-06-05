@@ -7,6 +7,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 #암호화
+import base64
 from typing import Tuple
 
 INITIAL_SEED = 0x1234  # 초기 시드 값 (16비트)
@@ -136,20 +137,20 @@ def main():
     prev_speed = 0
     try:
         while True:
-            # 1) 가짜 데이터 생성 (Python 딕셔너리)
+            # 1) 가짜 데이터 생성
             data_dict, prev_speed = generate_fake_data(prev_speed)
 
-            # 2) JSON 문자열로 변환 후 UTF-8 바이트로 인코딩
+            # 2) JSON 문자열 → UTF-8 바이트
             json_str     = json.dumps(data_dict, ensure_ascii=False)
             sensor_bytes = json_str.encode('utf-8')
 
-            # 3) 암호화 수행
+            # 3) Chaotic XOR 암호화 → packet(bytes)
             packet = encrypt_sensor_data(sensor_bytes, INITIAL_SEED)
 
-            # 4) MQTT로 암호화된 바이트(=packet) 발행
-            #    ※ paho-mqtt는 payload로 bytes를 그대로 받을 수 있습니다.
-            client.publish(TOPIC, packet, qos=0, retain=False)
-            print(f"[Published Encrypted] {TOPIC} → {packet.hex()}")
+            # 4) packet을 Base64 문자열로 인코딩해서 발행
+            b64_str = base64.b64encode(packet).decode('utf-8')
+            client.publish(TOPIC, b64_str, qos=0, retain=False)
+            print(f"[Published(Base64)] {TOPIC} → {json_str}")
 
             time.sleep(1)
 
