@@ -1,4 +1,5 @@
 from typing import Tuple
+import json
 
 def next_chaotic(x: int) -> Tuple[int, int]:
     """
@@ -121,20 +122,34 @@ def decrypt_sensor_data(packet: bytes, x0: int) -> bytes:
     return bytes(decrypted)
 
 
-# === 데모 실행부 ===
+# === 데모 실행부 (센서 데이터 JSON으로 변경) ===
 if __name__ == "__main__":
-    # 예시 센서 데이터(바이트 문자열)
-    sensor_data = b"Temperature:23.5"
+    sensor_dict = {
+        "carId": "01가1234",
+        "aclPedal": 1500,
+        "brkPedal": 0,
+        "createDate": "2025-06-05T23:10:01",
+        "driveState": "Rapid Acceleration",
+        "speed": 30,
+        "rpm": 2500,
+        "speedChange": 5.0
+    }
+
+    # JSON 문자열로 변환하고 바이트로 인코딩
+    sensor_json_str = json.dumps(sensor_dict, ensure_ascii=False)
+    sensor_data = sensor_json_str.encode('utf-8')
+
     initial_seed = 0x1234  # 송신자/수신자가 공유해야 하는 초기 시드 값
 
-    print("원본 센서 데이터          :", sensor_data)
-    print("원본 데이터 (16진수)      :", sensor_data.hex())
+    print("원본 JSON 문자열            :", sensor_json_str)
+    print("원본 JSON 바이트 (16진수)   :", sensor_data.hex())
 
     packet = encrypt_sensor_data(sensor_data, initial_seed)
-    print("\n암호화된 패킷 (16진수)     :", packet.hex())
+    print("\n암호화된 패킷 (16진수)      :", packet.hex())
 
     decrypted = decrypt_sensor_data(packet, initial_seed)
-    print("\n복호화된 센서 데이터      :", decrypted)
-    print("복호화 데이터 (16진수)    :", decrypted.hex())
+    print("\n복호화된 JSON 문자열        :", decrypted.decode('utf-8'))
+    print("복호화된 JSON 바이트 (16진수):", decrypted.hex())
 
+    # 검증
     assert decrypted == sensor_data, "복호화된 데이터가 원본과 일치하지 않습니다!"
