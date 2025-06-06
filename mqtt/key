@@ -1,0 +1,19 @@
+# 1) 개인키 생성
+openssl genrsa -out ca.key 2048
+
+# 2) CA 인증서 생성 (자체 서명 방식)
+openssl req -new -x509 -days 3650 -key ca.key -out ca.crt -subj "/CN=MyTestCA"
+
+# 3) 서버 키 생성
+openssl genrsa -out server.key 2048
+
+# 4) 서버 인증서 서명 요청 생성
+openssl req -new -key server.key -out server.csr -subj "/CN=drc-mqtt.dev-solution.live"
+
+# 5) 서버 인증서 서명 (CA)
+openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 3650
+
+# 생성된 파일을 mosquitto에 맞게 위치 복사
+sudo cp ca.crt /etc/mosquitto/certs/
+sudo cp server.crt /etc/mosquitto/certs/cert.pem
+sudo cp server.key /etc/mosquitto/certs/privkey.pem
