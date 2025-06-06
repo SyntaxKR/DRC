@@ -1,0 +1,22 @@
+``/etc/mosquitto/mosquitto.conf``
+```
+listener 1883
+allow_anonymous true
+
+include_dir /etc/mosquitto/conf.d/default.conf
+```
+``/etc/mosquitto/conf.d/default.conf``
+```
+listener 8883
+certfile /etc/mosquitto/certs/cert.pem
+keyfile /etc/mosquitto/certs/privkey.pem
+require_certificate false
+```
+```sudo systemctl start mosquitto```
+```sudo ss -tulnp | grep mosquitto```
+```journalctl -u mosquitto -f```
+
+## TLS 연결 테스트 예시 (로컬에서) (보안 적용 8883)
+```mosquitto_sub -h 127.0.0.1 -p 8883 -t test/topic --cafile /etc/mosquitto/certs/cert.pem --insecure```
+## 기존 방식 (보안 미적용 1883)
+```mosquitto_sub -h 127.0.0.1 -p 1883 -t test/topic```
