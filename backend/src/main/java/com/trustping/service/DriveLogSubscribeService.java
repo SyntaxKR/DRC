@@ -8,6 +8,8 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -37,7 +39,9 @@ public class DriveLogSubscribeService implements MqttCallback {
 
     @Autowired
     private ChaosDecoder chaosDecoder;
-    
+
+    private static final Logger logger = LoggerFactory.getLogger(DriveLogSubscribeService.class);
+
     // MQTT 브로커 연결
     @PostConstruct
     public void subscribeToTopic() {
@@ -112,16 +116,30 @@ public class DriveLogSubscribeService implements MqttCallback {
 
     // MQTT 메시지 도착 시 처리
     @Override
-    public void messageArrived(String topic, MqttMessage message) throws Exception {
+    public void messageArrived(String topic, MqttMessage message) {
     	// 메시지 문자열로 변환
         String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
-        System.out.println("Encrypted Message received on topic " + topic + ": " + payload);
+
+        // 암호화된 메시지 로그
+        logger.info("Encrypted Message received on topic {}: {}", topic, payload);
 
         try {
-            DriveLogReceiveDTO ReceiveDriveLog = chaosDecoder.decryptPayload(payload);
-            driveLogStorageService.saveData(ReceiveDriveLog);
-            driveScoreEvaluateService.evaluateScore(ReceiveDriveLog);
-            segmentService.updateOrCreateSegment(ReceiveDriveLog);
+            DriveLogReceiveDTO receiveDriveLog = chaosDecoder.decryptPayload(payload);
+
+            // 복호화된 메시지 로그 (필드별로 출력)
+            logger.info("Decrypted Message - CarId: {}, Speed: {}, SpeedChange: {}, DriveState: {}, RPM: {}, AclPedal: {}, BrkPedal: {}",
+                    receiveDriveLog.getCarId(),
+                    receiveDriveLog.getSpeed(),
+                    receiveDriveLog.getSpeedChange(),
+                    receiveDriveLog.getDriveState(),
+                    receiveDriveLog.getRpm(),
+                    receiveDriveLog.getAclPedal(),
+                    receiveDriveLog.getBrkPedal()
+            );
+
+            driveLogStorageService.saveData(receiveDriveLog);
+            driveScoreEvaluateService.evaluateScore(receiveDriveLog);
+            segmentService.updateOrCreateSegment(receiveDriveLog);
         } catch (Exception e) {
             System.err.println("복호화 또는 저장 중 오류: " + e.getMessage());
         }

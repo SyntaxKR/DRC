@@ -54,5 +54,8 @@ public class EnvConfig {
 	}
 
     public String getChaosSeed() { return dotenv.get("CHAOS_SEED");}
+
+    public String getCaCrtPath() { return dotenv.get("MQTT_CA_CRT_PATH");}
+
 }
 

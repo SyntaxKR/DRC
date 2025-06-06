@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.trustping'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.1'
 
 java {
 	toolchain {
@@ -38,6 +38,9 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5' // jwt 의존성
 	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5' // jwt 의존성
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5' // jwt 의존성
+	implementation 'org.slf4j:slf4j-api:2.0.9'
+	implementation 'ch.qos.logback:logback-classic:1.4.11'
+	implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5' // MQTT 의존성
 	compileOnly 'org.projectlombok:lombok' // lombok 의존성
 	annotationProcessor 'org.projectlombok:lombok' // lombok 의존성 2
 	implementation 'org.apache.poi:poi-ooxml:5.2.3' // apache poi 의존성
