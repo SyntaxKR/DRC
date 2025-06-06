@@ -142,26 +142,567 @@ def generate_fake_data(prev_speed):
     }
     return payload, speed
 
+EXTRACTED_DATA = [
+    {
+        "aclPedal": 584,
+        "brkPedal": 39,
+        "createDate": "2024-12-10T01:27:10",
+        "driveState": "Normal Driving",
+        "speed": 8,
+        "rpm": 991,
+        "speedChange": -1.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 596,
+        "brkPedal": 32,
+        "createDate": "2024-12-10T01:27:11",
+        "driveState": "Normal Driving",
+        "speed": 8,
+        "rpm": 978,
+        "speedChange": -0.5,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 606,
+        "brkPedal": 23,
+        "createDate": "2024-12-10T01:27:13",
+        "driveState": "Normal Driving",
+        "speed": 7,
+        "rpm": 941,
+        "speedChange": -0.6,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 617,
+        "brkPedal": 27,
+        "createDate": "2024-12-10T01:27:15",
+        "driveState": "Normal Driving",
+        "speed": 8,
+        "rpm": 985,
+        "speedChange": 0.6,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 626,
+        "brkPedal": 34,
+        "createDate": "2024-12-10T01:27:17",
+        "driveState": "Normal Driving",
+        "speed": 8,
+        "rpm": 1012,
+        "speedChange": 0.1,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 633,
+        "brkPedal": 75,
+        "createDate": "2024-12-10T01:27:18",
+        "driveState": "Normal Driving",
+        "speed": 8,
+        "rpm": 1004,
+        "speedChange": -0.4,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 592,
+        "brkPedal": 62,
+        "createDate": "2024-12-10T01:27:20",
+        "driveState": "Normal Driving",
+        "speed": 8,
+        "rpm": 990,
+        "speedChange": 0.6,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 601,
+        "brkPedal": 62,
+        "createDate": "2024-12-10T01:27:22",
+        "driveState": "Normal Driving",
+        "speed": 8,
+        "rpm": 946,
+        "speedChange": -0.2,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 639,
+        "brkPedal": 62,
+        "createDate": "2024-12-10T01:27:23",
+        "driveState": "Normal Driving",
+        "speed": 8,
+        "rpm": 930,
+        "speedChange": -0.4,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 601,
+        "brkPedal": 62,
+        "createDate": "2024-12-10T01:27:25",
+        "driveState": "Normal Driving",
+        "speed": 8,
+        "rpm": 912,
+        "speedChange": 0.4,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 637,
+        "brkPedal": 65,
+        "createDate": "2024-12-10T01:27:27",
+        "driveState": "Normal Driving",
+        "speed": 9,
+        "rpm": 916,
+        "speedChange": 0.9,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": -2003,
+        "brkPedal": 2826,
+        "createDate": "2024-12-10T01:27:28",
+        "driveState": "Normal Driving",
+        "speed": 9,
+        "rpm": 900,
+        "speedChange": 0.1,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 2,
+        "brkPedal": 3389,
+        "createDate": "2024-12-10T01:27:30",
+        "driveState": "Rapid Braking",
+        "speed": 10,
+        "rpm": 916,
+        "speedChange": 0.5,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1,
+        "brkPedal": 3466,
+        "createDate": "2024-12-10T01:27:32",
+        "driveState": "Rapid Braking",
+        "speed": 0,
+        "rpm": 812,
+        "speedChange": -10.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1,
+        "brkPedal": 3465,
+        "createDate": "2024-12-10T01:27:34",
+        "driveState": "Rapid Braking",
+        "speed": 0,
+        "rpm": 834,
+        "speedChange": 0.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 0,
+        "brkPedal": 3481,
+        "createDate": "2024-12-10T01:27:35",
+        "driveState": "Rapid Braking",
+        "speed": 0,
+        "rpm": 854,
+        "speedChange": 0.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1,
+        "brkPedal": 3425,
+        "createDate": "2024-12-10T01:27:37",
+        "driveState": "Rapid Braking",
+        "speed": 0,
+        "rpm": 867,
+        "speedChange": 0.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1,
+        "brkPedal": 3165,
+        "createDate": "2024-12-10T01:27:39",
+        "driveState": "Rapid Braking",
+        "speed": 0,
+        "rpm": 831,
+        "speedChange": 0.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 0,
+        "brkPedal": 3170,
+        "createDate": "2024-12-10T01:27:40",
+        "driveState": "Rapid Braking",
+        "speed": 0,
+        "rpm": 834,
+        "speedChange": 0.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 0,
+        "brkPedal": 3051,
+        "createDate": "2024-12-10T01:27:42",
+        "driveState": "Rapid Braking",
+        "speed": 0,
+        "rpm": 854,
+        "speedChange": 0.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 0,
+        "brkPedal": 3047,
+        "createDate": "2024-12-10T01:27:44",
+        "driveState": "Rapid Braking",
+        "speed": 0,
+        "rpm": 891,
+        "speedChange": 0.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1,
+        "brkPedal": 3051,
+        "createDate": "2024-12-10T01:27:45",
+        "driveState": "Rapid Braking",
+        "speed": 0,
+        "rpm": 842,
+        "speedChange": 0.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 2,
+        "brkPedal": 3010,
+        "createDate": "2024-12-10T01:27:47",
+        "driveState": "Rapid Braking",
+        "speed": 0,
+        "rpm": 813,
+        "speedChange": 0.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 2,
+        "brkPedal": 2093,
+        "createDate": "2024-12-10T01:27:49",
+        "driveState": "Normal Driving",
+        "speed": 13,
+        "rpm": 1156,
+        "speedChange": 13.2,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 2576,
+        "brkPedal": 8,
+        "createDate": "2024-12-10T01:27:51",
+        "driveState": "Normal Driving",
+        "speed": 27,
+        "rpm": 1488,
+        "speedChange": 14.4,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 3269,
+        "brkPedal": 21,
+        "createDate": "2024-12-10T01:27:52",
+        "driveState": "Normal Driving",
+        "speed": 39,
+        "rpm": 1875,
+        "speedChange": 11.8,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 3108,
+        "brkPedal": 25,
+        "createDate": "2024-12-10T01:27:54",
+        "driveState": "Rapid Acceleration",
+        "speed": 50,
+        "rpm": 2196,
+        "speedChange": 11.4,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 3034,
+        "brkPedal": 25,
+        "createDate": "2024-12-10T01:27:56",
+        "driveState": "Rapid Acceleration",
+        "speed": 61,
+        "rpm": 2508,
+        "speedChange": 11.1,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 2892,
+        "brkPedal": 25,
+        "createDate": "2024-12-10T01:27:58",
+        "driveState": "Rapid Acceleration",
+        "speed": 73,
+        "rpm": 2875,
+        "speedChange": 12.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 2604,
+        "brkPedal": 23,
+        "createDate": "2024-12-10T01:27:59",
+        "driveState": "Rapid Acceleration",
+        "speed": 85,
+        "rpm": 3219,
+        "speedChange": 11.2,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 2543,
+        "brkPedal": 31,
+        "createDate": "2024-12-10T01:28:01",
+        "driveState": "Rapid Acceleration",
+        "speed": 98,
+        "rpm": 3590,
+        "speedChange": 13.8,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 2632,
+        "brkPedal": 19,
+        "createDate": "2024-12-10T01:28:03",
+        "driveState": "Rapid Acceleration",
+        "speed": 113,
+        "rpm": 3932,
+        "speedChange": 14.7,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1363,
+        "brkPedal": 10,
+        "createDate": "2024-12-10T01:28:05",
+        "driveState": "Normal Driving",
+        "speed": 120,
+        "rpm": 4123,
+        "speedChange": 6.4,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1014,
+        "brkPedal": 12,
+        "createDate": "2024-12-10T01:28:06",
+        "driveState": "Normal Driving",
+        "speed": 119,
+        "rpm": 4201,
+        "speedChange": -0.8,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1087,
+        "brkPedal": 22,
+        "createDate": "2024-12-10T01:28:08",
+        "driveState": "Normal Driving",
+        "speed": 118,
+        "rpm": 4102,
+        "speedChange": -0.4,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1089,
+        "brkPedal": 25,
+        "createDate": "2024-12-10T01:28:10",
+        "driveState": "Normal Driving",
+        "speed": 118,
+        "rpm": 3964,
+        "speedChange": -0.1,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1171,
+        "brkPedal": 23,
+        "createDate": "2024-12-10T01:28:11",
+        "driveState": "Normal Driving",
+        "speed": 118,
+        "rpm": 3916,
+        "speedChange": -0.1,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1044,
+        "brkPedal": 16,
+        "createDate": "2024-12-10T01:28:13",
+        "driveState": "Normal Driving",
+        "speed": 119,
+        "rpm": 3896,
+        "speedChange": 0.4,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1260,
+        "brkPedal": -28,
+        "createDate": "2024-12-10T01:28:15",
+        "driveState": "Normal Driving",
+        "speed": 118,
+        "rpm": 3877,
+        "speedChange": -1.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1294,
+        "brkPedal": -32,
+        "createDate": "2024-12-10T01:28:17",
+        "driveState": "Normal Driving",
+        "speed": 118,
+        "rpm": 3902,
+        "speedChange": 0.0,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1337,
+        "brkPedal": -37,
+        "createDate": "2024-12-10T01:28:18",
+        "driveState": "Normal Driving",
+        "speed": 117,
+        "rpm": 3866,
+        "speedChange": -0.8,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 2201,
+        "brkPedal": -44,
+        "createDate": "2024-12-10T01:28:20",
+        "driveState": "Rapid Acceleration",
+        "speed": 117,
+        "rpm": 3899,
+        "speedChange": 0.6,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 2606,
+        "brkPedal": -47,
+        "createDate": "2024-12-10T01:28:22",
+        "driveState": "Rapid Acceleration",
+        "speed": 118,
+        "rpm": 3944,
+        "speedChange": 0.6,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 2249,
+        "brkPedal": -47,
+        "createDate": "2024-12-10T01:28:23",
+        "driveState": "Rapid Acceleration",
+        "speed": 119,
+        "rpm": 3987,
+        "speedChange": 0.6,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1123,
+        "brkPedal": -54,
+        "createDate": "2024-12-10T01:28:25",
+        "driveState": "Normal Driving",
+        "speed": 118,
+        "rpm": 3987,
+        "speedChange": -0.9,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 970,
+        "brkPedal": -54,
+        "createDate": "2024-12-10T01:28:27",
+        "driveState": "Normal Driving",
+        "speed": 117,
+        "rpm": 3996,
+        "speedChange": -0.2,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 916,
+        "brkPedal": -4,
+        "createDate": "2024-12-10T01:28:29",
+        "driveState": "Normal Driving",
+        "speed": 118,
+        "rpm": 3997,
+        "speedChange": 0.1,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1169,
+        "brkPedal": -42,
+        "createDate": "2024-12-10T01:28:31",
+        "driveState": "Normal Driving",
+        "speed": 117,
+        "rpm": 4000,
+        "speedChange": -0.5,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1175,
+        "brkPedal": -52,
+        "createDate": "2024-12-10T01:28:32",
+        "driveState": "Normal Driving",
+        "speed": 117,
+        "rpm": 4000,
+        "speedChange": -0.4,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 1105,
+        "brkPedal": -50,
+        "createDate": "2024-12-10T01:28:34",
+        "driveState": "Normal Driving",
+        "speed": 117,
+        "rpm": 3999,
+        "speedChange": 0.8,
+        "carId": "01가1234"
+    },
+    {
+        "aclPedal": 987,
+        "brkPedal": -47,
+        "createDate": "2024-12-10T01:28:36",
+        "driveState": "Normal Driving",
+        "speed": 117,
+        "rpm": 4000,
+        "speedChange": -0.8,
+        "carId": "01가1234"
+    },
+]
+
+
+
 def main():
     prev_speed = 0
     try:
-        while True:
-            # 1) 가짜 데이터 생성
-            data_dict, prev_speed = generate_fake_data(prev_speed)
+        for record in EXTRACTED_DATA:
+            # 1) 원본 record를 건드리지 않기 위해 copy() 사용
+            data_to_send = record.copy()
 
-            # 2) JSON 문자열 → UTF-8 바이트
-            json_str = json.dumps(data_dict, ensure_ascii=False)
-            sensor_bytes = json_str.encode('utf-8')
+            # 2) 전송 시각으로 createDate 덮어쓰기
+            data_to_send["createDate"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-            # 3) Chaotic XOR 암호화 → packet(bytes)
+            # 3) JSON 직렬화 → bytes
+            json_str = json.dumps(data_to_send, ensure_ascii=False)
+            sensor_bytes = json_str.encode("utf-8")
+
+            # 4) Chaotic 암호화 → packet
             packet = encrypt_sensor_data(sensor_bytes, INITIAL_SEED)
 
-            # 4) packet을 Base64 문자열로 인코딩해서 발행
-            b64_str = base64.b64encode(packet).decode('utf-8')
+            # 5) Base64 인코딩 후 MQTT 발행
+            b64_str = base64.b64encode(packet).decode("utf-8")
             client.publish(TOPIC, b64_str, qos=0, retain=False)
             print(f"[Published(Base64)] {TOPIC} → {json_str}")
 
+            # 원하는 간격만큼 대기 (예: 1초)
             time.sleep(1)
+
+        client.disconnect()
+        print("모든 데이터 전송 완료, MQTT 연결 해제.")
+        
+        # while True:
+            
+        #     # 1) 가짜 데이터 생성
+        #     data_dict, prev_speed = generate_fake_data(prev_speed)
+
+        #     # 2) JSON 문자열 → UTF-8 바이트
+        #     json_str = json.dumps(data_dict, ensure_ascii=False)
+        #     sensor_bytes = json_str.encode('utf-8')
+
+        #     # 3) Chaotic XOR 암호화 → packet(bytes)
+        #     packet = encrypt_sensor_data(sensor_bytes, INITIAL_SEED)
+
+        #     # 4) packet을 Base64 문자열로 인코딩해서 발행
+        #     b64_str = base64.b64encode(packet).decode('utf-8')
+        #     client.publish(TOPIC, b64_str, qos=0, retain=False)
+        #     print(f"[Published(Base64)] {TOPIC} → {json_str}")
+
+        #     time.sleep(1)
 
     except KeyboardInterrupt:
         print("중단 요청 받음, 종료합니다.")
