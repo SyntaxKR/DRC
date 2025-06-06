@@ -19,10 +19,20 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
 import os
 
-load_dotenv()
+import ssl
+import base64
+from mqtt_test import encrypt_sensor_data, INITIAL_SEED, TOPIC
 
-SERVER_IP   = os.getenv("IP", "")               
-SERVER_PORT = os.getenv("PORT", "0")            
+load_dotenv()
+SERVER_IP   = os.getenv("IP")
+BROKER_HOST  = os.getenv("BROKER_HOST")
+CA_CERT_PATH = os.getenv("MQTT_CA_CERT")
+SERVER_PORT = os.getenv("PORT")
+if SERVER_PORT is None:
+    raise RuntimeError(".env에 PORT가 설정되지 않았습니다.")
+SERVER_PORT = int(SERVER_PORT)
+# SERVER_IP   = os.getenv("IP", "")               
+# SERVER_PORT = os.getenv("PORT", "0")            
 
 df = pd.read_csv("/home/drc/project/DRC/raspberrypi/audi_s1.csv", sep=',')
 
@@ -106,10 +116,14 @@ is_accelerating = False
 
 # MQTT 설정
 client = mqtt.Client()
+client.tls_set(
+    ca_certs=CA_CERT_PATH,
+    tls_version=ssl.PROTOCOL_TLSv1_2
+)
 
 try:
-    client.connect(SERVER_IP, int(SERVER_PORT), 60)
-    print(f"MQTT Broker에 연결됨: {SERVER_IP}:{SERVER_PORT}")
+    client.connect(BROKER_HOST, int(SERVER_PORT), 60)
+    print(f"MQTT Broker에 연결됨: {BROKER_HOST}:{SERVER_PORT}")
 except Exception as e:
     print("MQTT 연결 실패:", e)
 
@@ -442,12 +456,21 @@ def run_code():
                 "speed": int(speed_value),
                 "rpm": int(rpm_value),
                 "speedChange":speed_change  # speedChange data["kmh"]
-            })             
+            })
             print(data)
             # 레이블 업데이트 (정수 형식)
             text_label.config(text=f"현재 : {int(speed_value)}")    
             rpm_label.config(text=f"RPM : {int(rpm_value)}")
-            client.publish('DriveLog', json.dumps(data), 0, retain=False)
+            # 기존 방식
+            # client.publish('DriveLog', json.dumps(data), 0, retain=False)
+            # 혼돈신호 암호화
+            json_str = json.dumps(data, ensure_ascii=False)
+            sensor_bytes = json_str.encode('utf-8')
+
+            packet = encrypt_sensor_data(sensor_bytes, INITIAL_SEED)
+            b64_str = base64.b64encode(packet).decode('utf-8')
+            client.publish(TOPIC, b64_str, qos=0, retain=False)
+
             i += 1
             time.sleep(1)
 

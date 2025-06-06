@@ -6,6 +6,8 @@ import paho.mqtt.client as mqtt
 from datetime import datetime
 from dotenv import load_dotenv
 
+import ssl
+
 #암호화
 import base64
 from typing import Tuple
@@ -91,8 +93,11 @@ def decrypt_sensor_data(packet: bytes, x0: int) -> bytes:
 # 암호화 끝
 
 
+
 load_dotenv()
 SERVER_IP   = os.getenv("IP")
+BROKER_HOST  = os.getenv("BROKER_HOST")
+CA_CERT_PATH = os.getenv("MQTT_CA_CERT")
 SERVER_PORT = os.getenv("PORT")
 
 # PORT를 정수로 변환
@@ -105,9 +110,13 @@ CLIENT_ID = f"fake_publisher_{random.randint(0,9999)}"
 
 # MQTT 연결
 client = mqtt.Client(client_id=CLIENT_ID)
+client.tls_set(
+    ca_certs=CA_CERT_PATH,
+    tls_version=ssl.PROTOCOL_TLSv1_2
+)
 try:
-    client.connect(SERVER_IP, SERVER_PORT, keepalive=60)
-    print(f"[Connected] MQTT 브로커 → {SERVER_IP}:{SERVER_PORT}, client_id={CLIENT_ID}")
+    client.connect(BROKER_HOST, SERVER_PORT, keepalive=60)
+    print(f"[Connected] MQTT 브로커 → {BROKER_HOST}:{SERVER_PORT}, client_id={CLIENT_ID}")
 except Exception as e:
     print("MQTT 연결 실패:", e)
     exit(1)
@@ -141,7 +150,7 @@ def main():
             data_dict, prev_speed = generate_fake_data(prev_speed)
 
             # 2) JSON 문자열 → UTF-8 바이트
-            json_str     = json.dumps(data_dict, ensure_ascii=False)
+            json_str = json.dumps(data_dict, ensure_ascii=False)
             sensor_bytes = json_str.encode('utf-8')
 
             # 3) Chaotic XOR 암호화 → packet(bytes)
@@ -154,13 +163,6 @@ def main():
 
             time.sleep(1)
 
-        # 기존 mqtt 메세지 수신러
-        # while True:
-        #     data, prev_speed = generate_fake_data(prev_speed)
-        #     msg = json.dumps(data, ensure_ascii=False)
-        #     client.publish(TOPIC, msg, qos=0, retain=False)
-        #     print(f"[Published] {TOPIC} → {msg}")
-        #     time.sleep(1)
     except KeyboardInterrupt:
         print("중단 요청 받음, 종료합니다.")
     finally:
