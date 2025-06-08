@@ -3,7 +3,7 @@ import time
 import json
 import random
 import paho.mqtt.client as mqtt
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 
 import ssl
@@ -92,7 +92,37 @@ def decrypt_sensor_data(packet: bytes, x0: int) -> bytes:
     return bytes(decrypted)
 # 암호화 끝
 
+# TOTP 생성
+import hmac
+import hashlib
+import struct
+from base64 import b64decode
 
+SECRET_BASE64 = "JBSWY3DPEHPK3PXP"
+
+def generate_totp(secret_base64: str, for_time: int = None, digits: int = 6, period: int = 60) -> int:
+    """
+    Base64로 인코딩된 공유 비밀 키를 이용해 TOTP 코드를 생성합니다.
+
+    Args:
+        secret_base64: Base64 인코딩된 shared secret 문자열
+        for_time:      Unix timestamp (초 단위). None이면 현재 시각을 사용.
+        digits:        출력할 OTP 자리수 (기본 6자리)
+        period:        TOTP 유효 기간(초) (기본 60초)
+    Returns:
+        0 ~ (10^digits - 1) 범위의 정수형 TOTP 코드
+    """
+    if for_time is None:
+        for_time = int(time.time())
+    key = b64decode(secret_base64)
+    counter = int(for_time // period)
+    msg = struct.pack(">Q", counter)  # 8바이트 big-endian
+
+    hmac_hash = hmac.new(key, msg, hashlib.sha1).digest()
+    offset = hmac_hash[-1] & 0x0F
+    code = (struct.unpack(">I", hmac_hash[offset:offset+4])[0] & 0x7FFFFFFF) % (10**digits)
+    return code
+# TOTP 끝
 
 load_dotenv()
 SERVER_IP   = os.getenv("IP")
@@ -660,49 +690,69 @@ EXTRACTED_DATA = [
 def main():
     prev_speed = 0
     try:
-        for record in EXTRACTED_DATA:
-            # 1) 원본 record를 건드리지 않기 위해 copy() 사용
-            data_to_send = record.copy()
+        # 더미 데이터 보내기
+        # for record in EXTRACTED_DATA:
+        #     # 1) 원본 record를 건드리지 않기 위해 copy() 사용
+        #     data_to_send = record.copy()
 
-            # 2) 전송 시각으로 createDate 덮어쓰기
-            data_to_send["createDate"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        #     # 2) 전송 시각으로 createDate 덮어쓰기
+        #     data_to_send["createDate"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-            # 3) JSON 직렬화 → bytes
-            json_str = json.dumps(data_to_send, ensure_ascii=False)
-            sensor_bytes = json_str.encode("utf-8")
+        #     # 3) JSON 직렬화 → bytes
+        #     json_str = json.dumps(data_to_send, ensure_ascii=False)
+        #     sensor_bytes = json_str.encode("utf-8")
 
-            # 4) Chaotic 암호화 → packet
-            packet = encrypt_sensor_data(sensor_bytes, INITIAL_SEED)
-
-            # 5) Base64 인코딩 후 MQTT 발행
-            b64_str = base64.b64encode(packet).decode("utf-8")
-            client.publish(TOPIC, b64_str, qos=0, retain=False)
-            print(f"[Published(Base64)] {TOPIC} → {json_str}")
-
-            # 원하는 간격만큼 대기 (예: 1초)
-            time.sleep(1)
-
-        client.disconnect()
-        print("모든 데이터 전송 완료, MQTT 연결 해제.")
-        
-        # while True:
-            
-        #     # 1) 가짜 데이터 생성
-        #     data_dict, prev_speed = generate_fake_data(prev_speed)
-
-        #     # 2) JSON 문자열 → UTF-8 바이트
-        #     json_str = json.dumps(data_dict, ensure_ascii=False)
-        #     sensor_bytes = json_str.encode('utf-8')
-
-        #     # 3) Chaotic XOR 암호화 → packet(bytes)
+        #     # 4) Chaotic 암호화 → packet
         #     packet = encrypt_sensor_data(sensor_bytes, INITIAL_SEED)
 
-        #     # 4) packet을 Base64 문자열로 인코딩해서 발행
-        #     b64_str = base64.b64encode(packet).decode('utf-8')
+        #     # 5) Base64 인코딩 후 MQTT 발행
+        #     b64_str = base64.b64encode(packet).decode("utf-8")
         #     client.publish(TOPIC, b64_str, qos=0, retain=False)
         #     print(f"[Published(Base64)] {TOPIC} → {json_str}")
 
+        #     # 원하는 간격만큼 대기 (예: 1초)
         #     time.sleep(1)
+
+        # client.disconnect()
+        # print("모든 데이터 전송 완료, MQTT 연결 해제.")
+        
+        while True:
+            
+            # 1) 가짜 데이터 생성
+            data_dict, prev_speed = generate_fake_data(prev_speed)
+
+            # 2) JSON → bytes
+            json_str = json.dumps(data_dict, ensure_ascii=False)
+            sensor_bytes = json_str.encode('utf-8')
+
+            # 3-1) 헤더 JSON
+            header_dict  = {"createdAt": data_dict["createDate"]}
+
+            # 3-2) TOTP seed 계산
+            ts_str = header_dict["createdAt"]
+            dt = datetime.strptime(ts_str, '%Y-%m-%dT%H:%M:%S')
+            dt = dt.replace(tzinfo=timezone.utc)
+            timestamp_totp = int(dt.timestamp())
+            totp_code = generate_totp(SECRET_BASE64, timestamp_totp)
+
+            # 3-3) 암호화
+            encrypted_body = encrypt_sensor_data(sensor_bytes, totp_code)
+
+            # 4) Base64 인코딩
+            b64_body = base64.b64encode(encrypted_body).decode('utf-8')
+
+            # 5) Envelope JSON 생성
+            envelope = {
+                "header": header_dict,
+                "data": b64_body
+            }
+            envelope_str = json.dumps(envelope, ensure_ascii=False)
+
+            # 6) 발행
+            client.publish(TOPIC, envelope_str, qos=0, retain=False)
+            print(f"[Published(Envelope) {totp_code}] {envelope_str}")
+
+            time.sleep(1)
 
     except KeyboardInterrupt:
         print("중단 요청 받음, 종료합니다.")
