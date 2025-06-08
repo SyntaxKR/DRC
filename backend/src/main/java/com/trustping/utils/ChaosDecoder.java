@@ -11,19 +11,13 @@ import java.util.Base64;
 
 @Component
 public class ChaosDecoder {
-
-    @Autowired
-    private EnvConfig envConfig;
-
-    public DriveLogReceiveDTO decryptPayload(String base64Payload) {
+    public DriveLogReceiveDTO decryptPayload(String base64Payload, int otp) {
         try {
-            int seed = Integer.decode(envConfig.getChaosSeed());
-
             // Base64 디코딩
             byte[] packet = Base64.getDecoder().decode(base64Payload);
 
             // 텐트맵 복호화
-            byte[] decrypted = TentMapUtil.decryptSensorData(packet, seed);
+            byte[] decrypted = TentMapUtil.decryptSensorData(packet, otp);
 
             // JSON 역직렬화
             ObjectMapper mapper = new ObjectMapper();

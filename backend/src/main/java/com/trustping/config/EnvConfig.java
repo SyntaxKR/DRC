@@ -53,7 +53,7 @@ public class EnvConfig {
 		return dotenv.get("JWT_SECRET_KEY");
 	}
 
-    public String getChaosSeed() { return dotenv.get("CHAOS_SEED");}
+    public String getOtpSeed() { return dotenv.get("OTP_SEED");}
 
     public String getCaCrtPath() { return dotenv.get("MQTT_CA_CRT_PATH");}
 

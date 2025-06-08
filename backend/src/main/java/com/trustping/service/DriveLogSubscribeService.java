@@ -3,6 +3,7 @@ package com.trustping.service;
 import java.nio.charset.StandardCharsets;
 
 import com.trustping.utils.ChaosDecoder;
+import com.trustping.utils.OTPUtil;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -15,7 +16,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import com.trustping.DTO.DriveLogReceiveDTO;
 import com.trustping.config.EnvConfig;
-
+import org.json.JSONObject;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import jakarta.annotation.PostConstruct;
 
 @Service
@@ -114,37 +118,54 @@ public class DriveLogSubscribeService implements MqttCallback {
         }
     }
 
-    // MQTT 메시지 도착 시 처리
     @Override
     public void messageArrived(String topic, MqttMessage message) {
-    	// 메시지 문자열로 변환
         String payload = new String(message.getPayload(), StandardCharsets.UTF_8);
-
-        // 암호화된 메시지 로그
-        logger.info("Encrypted Message received on topic {}: {}", topic, payload);
+        logger.info("Raw Payload: {}", payload);
 
         try {
-            DriveLogReceiveDTO receiveDriveLog = chaosDecoder.decryptPayload(payload);
+            JSONObject jsonObject = new JSONObject(payload);
+            JSONObject header = jsonObject.getJSONObject("header");
+            String createdAt = header.getString("createdAt").trim();
+            String data = jsonObject.getString("data");
 
-            // 복호화된 메시지 로그 (필드별로 출력)
-            logger.info("Decrypted Message - CarId: {}, Speed: {}, SpeedChange: {}, DriveState: {}, RPM: {}, AclPedal: {}, BrkPedal: {}",
-                    receiveDriveLog.getCarId(),
-                    receiveDriveLog.getSpeed(),
-                    receiveDriveLog.getSpeedChange(),
-                    receiveDriveLog.getDriveState(),
-                    receiveDriveLog.getRpm(),
-                    receiveDriveLog.getAclPedal(),
-                    receiveDriveLog.getBrkPedal()
-            );
+            long timestamp;
+            try {
+                DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+                LocalDateTime dateTime = LocalDateTime.parse(createdAt, formatter);
+                timestamp = dateTime.toEpochSecond(ZoneOffset.UTC);
+            } catch (java.time.format.DateTimeParseException e) {
+                System.err.println("Invalid date format for createdAt: " + createdAt);
+                return;
+            }
 
-            driveLogStorageService.saveData(receiveDriveLog);
-            driveScoreEvaluateService.evaluateScore(receiveDriveLog);
-            segmentService.updateOrCreateSegment(receiveDriveLog);
+            int otp = OTPUtil.generateTOTP(envConfig.getOtpSeed(), timestamp, 6, 60);
+            System.out.println("Generated OTP: " + otp);
+
+            try {
+                DriveLogReceiveDTO receiveDriveLog = chaosDecoder.decryptPayload(data, otp);
+                logger.info("Decrypted Message - CarId: {}, Speed: {}, SpeedChange: {}, DriveState: {}, RPM: {}, AclPedal: {}, BrkPedal: {}",
+                        receiveDriveLog.getCarId(),
+                        receiveDriveLog.getSpeed(),
+                        receiveDriveLog.getSpeedChange(),
+                        receiveDriveLog.getDriveState(),
+                        receiveDriveLog.getRpm(),
+                        receiveDriveLog.getAclPedal(),
+                        receiveDriveLog.getBrkPedal()
+                );
+
+                driveLogStorageService.saveData(receiveDriveLog);
+                driveScoreEvaluateService.evaluateScore(receiveDriveLog);
+                segmentService.updateOrCreateSegment(receiveDriveLog);
+            } catch (RuntimeException e) {
+                System.err.println("복호화 실패: " + e.getMessage());
+                e.printStackTrace();
+            }
         } catch (Exception e) {
             System.err.println("복호화 또는 저장 중 오류: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-    
     // 전송 확인 부분 전송은 안 해서 구현 X
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
