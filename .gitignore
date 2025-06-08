@@ -4,3 +4,5 @@ etc/mosquitto/certs/
 
 # 가상환경
 raspberrypi/venv/
+
+*.crt
