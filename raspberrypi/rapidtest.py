@@ -397,82 +397,96 @@ def delta_speed(current_speed):
 
 # 데이터 수집 및 업데이트 함수
 def run_code():
-    print(">>> run_code() 시작!")
+    print("🚀 run_code() 시작됨")
     i = 0
-    state = "Normal Driving"
-    global previous_speed, previous_time  # 전역 변수로 초기화 필요
-    previous_speed = 0  # 이전 속도 초기값 설정
-    previous_time = time.time()  # 이전 시간 초기값 설정
-    
-    while i < len(df):  # 데이터프레임의 길이에 따라 반복
+    global previous_speed, previous_time
+    previous_speed = 0
+    previous_time = time.time()
+
+    while i < len(df):
         try:
-            # 첫 번째 로드셀 (엑셀)
-            val_accelerator = hx1.get_weight(5)
-            print(f"현재상태 : 액셀(Accelerator)  무게: {val_accelerator} g")
+            print(f"\n[🔁 LOOP {i}]")
 
-            # 두 번째 로드셀 (브레이크)
-            val_brake = hx2.get_weight(5)
-            print(f"현재상태 : 브레이크(Brake) 무게: {val_brake} g")
-            
-            hx1.power_down()
-            hx2.power_down()
-            hx1.power_up()
-            hx2.power_up()
-            
-            # 상태 업데이트 및 UI 갱신
-            root.after(0, update_display_state,
-                       val_accelerator, val_brake, state)
-            
-            rpm_value = df.iloc[i]['Engine RPM']  # Engine RPM 칼럼 값
-            speed_value = df.iloc[i]['Ground Speed']  # Ground Speed 칼럼 값
-            if pd.isna(speed_value):
-                speed_value = 0  # 기본값 설정
+            # 🚗 센서 데이터 읽기
+            try:
+                val_accel = hx1.get_weight(5)
+                val_brake = hx2.get_weight(5)
+                print(f"[SENSOR] 액셀: {val_accel}g, 브레이크: {val_brake}g")
 
-            print("rpm : ", rpm_value, "speed : ", speed_value)
-            # 속도 변화 계산
-            speed_change = delta_speed(speed_value)  # 속도 변화(kmh) 계산
-            speed_change = round(speed_change, 1)
-            
-            # check_info 호출하여 음성 상태 평가 및 재생
-            check_info(val_accelerator, val_brake, rpm_value)
-            
-            # 현재 시간 추가
+                hx1.power_down()
+                hx2.power_down()
+                hx1.power_up()
+                hx2.power_up()
+
+            except Exception as sensor_error:
+                print(f"[❌ SENSOR ERROR] {sensor_error}")
+                continue
+
+            # 🧾 CSV 데이터 불러오기
+            try:
+                rpm_value = df.iloc[i].get('Engine RPM', 0)
+                speed_value = df.iloc[i].get('Ground Speed', 0)
+                speed_value = 0 if pd.isna(speed_value) else speed_value
+                print(f"[DATA] RPM: {rpm_value}, 속도: {speed_value}")
+            except Exception as data_error:
+                print(f"[❌ DATA ERROR] {data_error}")
+                continue
+
+            # 📈 속도 변화 계산
+            speed_change = round(delta_speed(speed_value), 1)
+
+            # 🎛️ 상태 평가 및 이미지 업데이트
+            root.after(0, update_display_state, val_accel, val_brake, data["driveState"])
+            check_info(val_accel, val_brake, rpm_value)
+
+            # 🕒 시간 기록
             now = datetime.now()
+
+            # 📡 MQTT 데이터 구성
             data.update({
-                "carId": "01가1234",  # 차량 ID 유지
-                "aclPedal": int(val_accelerator),
+                "carId": "01가1234",
+                "aclPedal": int(val_accel),
                 "brkPedal": int(val_brake),
                 "createDate": now.strftime('%Y-%m-%dT%H:%M:%S'),
-                "driveState": data["driveState"],  # 기존 driveState 유지
+                "driveState": data["driveState"],
                 "speed": int(speed_value),
                 "rpm": int(rpm_value),
-                "speedChange":speed_change  # speedChange data["kmh"]
+                "speedChange": speed_change
             })
-            print(data)
-            # 레이블 업데이트 (정수 형식)
-            root.after(0, lambda v=speed_value: 
-                       text_label.config(text=f"현재 : {int(v)}"))
-            root.after(0, lambda r=rpm_value: 
-                       rpm_label.config(text=f"RPM : {int(r)}"))
-            # 기존 방식
-            # client.publish('DriveLog', json.dumps(data), 0, retain=False)
-            # 혼돈신호 암호화
-            json_str = json.dumps(data, ensure_ascii=False)
-            sensor_bytes = json_str.encode('utf-8')
+            print(f"[📦 SEND DATA] {data}")
 
-            packet = encrypt_sensor_data(sensor_bytes, INITIAL_SEED)
-            b64_str = base64.b64encode(packet).decode('utf-8')
-            client.publish(TOPIC, b64_str, qos=0, retain=False)
+            # 📟 Tkinter UI 업데이트
+            root.after(0, lambda v=speed_value: text_label.config(text=f"현재 : {int(v)}"))
+            root.after(0, lambda r=rpm_value: rpm_label.config(text=f"RPM : {int(r)}"))
+
+            # 🔐 MQTT 암호화 전송
+            try:
+                json_str = json.dumps(data, ensure_ascii=False)
+                sensor_bytes = json_str.encode('utf-8')
+                packet = encrypt_sensor_data(sensor_bytes, INITIAL_SEED)
+                b64_str = base64.b64encode(packet).decode('utf-8')
+                client.publish(TOPIC, b64_str, qos=0, retain=False)
+            except Exception as mqtt_error:
+                print(f"[❌ MQTT ERROR] {mqtt_error}")
 
             i += 1
             time.sleep(1)
 
-        except Exception as error:
-            print(error)
+        except Exception as main_error:
+            print(f"[🔥 LOOP ERROR] {main_error}")
+            import traceback
+            traceback.print_exc()
             continue
 
+
 if __name__ == "__main__":
-    client.loop_start()  
+    print("📡 MQTT 연결 시도 중...")
+    client.loop_start()
+
+    print("🧵 백그라운드 run_code 쓰레드 실행")
     threading.Thread(target=run_code, daemon=True).start()
-    root.mainloop()     
+
+    print("🖼️ Tkinter 메인 루프 실행 시작")
+    root.mainloop()
+    
 
