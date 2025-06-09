@@ -433,7 +433,7 @@ def run_code():
             
             # 상태 업데이트 및 UI 갱신
             root.after(0, update_display_state,
-+                       val_accelerator, val_brake, state)
+                       val_accelerator, val_brake, state)
             
             rpm_value = df.iloc[i]['Engine RPM']  # Engine RPM 칼럼 값
             speed_value = df.iloc[i]['Ground Speed']  # Ground Speed 칼럼 값
@@ -463,9 +463,9 @@ def run_code():
             print(data)
             # 레이블 업데이트 (정수 형식)
             root.after(0, lambda v=speed_value: 
-+                       text_label.config(text=f"현재 : {int(v)}"))
-+            root.after(0, lambda r=rpm_value: 
-+                       rpm_label.config(text=f"RPM : {int(r)}"))
+                       text_label.config(text=f"현재 : {int(v)}"))
+            root.after(0, lambda r=rpm_value: 
+                       rpm_label.config(text=f"RPM : {int(r)}"))
             # 기존 방식
             # client.publish('DriveLog', json.dumps(data), 0, retain=False)
             # 혼돈신호 암호화
