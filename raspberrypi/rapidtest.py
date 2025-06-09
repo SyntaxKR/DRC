@@ -124,7 +124,7 @@ client.tls_set(
 try:
     client.connect(BROKER_HOST, int(SERVER_PORT), 60)
     client.loop_start()
-    print(f"MQTT Broker에 연결됨: {BROKER_HOST}:{SERVER_PORT} (network loop started)")
+    print(f"MQTT Broker에 연결됨: {BROKER_HOST}:{SERVER_PORT}") 
 except Exception as e:
     print("MQTT 연결 실패:", e)
 
@@ -409,77 +409,79 @@ def delta_speed(current_speed):
 
 # 데이터 수집 및 업데이트 함수
 def run_code():
+    print(">>> run_code() 시작!")
     i = 0
     state = "Normal Driving"
-    global previous_speed, previous_time
-    previous_speed = 0
-    previous_time  = time.time()
-
-    while i < len(df):
+    global previous_speed, previous_time  # 전역 변수로 초기화 필요
+    previous_speed = 0  # 이전 속도 초기값 설정
+    previous_time = time.time()  # 이전 시간 초기값 설정
+    
+    while i < len(df):  # 데이터프레임의 길이에 따라 반복
         try:
-            # 1) 로드셀 값 읽기
+            # 첫 번째 로드셀 (엑셀)
             val_accelerator = hx1.get_weight(5)
             print(f"현재상태 : 액셀(Accelerator)  무게: {val_accelerator} g")
+
+            # 두 번째 로드셀 (브레이크)
             val_brake = hx2.get_weight(5)
             print(f"현재상태 : 브레이크(Brake) 무게: {val_brake} g")
-
-            # 전원 재공급
-            hx1.power_down(); hx1.power_up()
-            hx2.power_down(); hx2.power_up()
-
-            # ─── UI 이미지 갱신 (직접 호출 대신 after 위임) ───
+            
+            hx1.power_down()
+            hx2.power_down()
+            hx1.power_up()
+            hx2.power_up()
+            
+            # 상태 업데이트 및 UI 갱신
             root.after(0, update_display_state,
-                       val_accelerator, val_brake, state)
-
-            # 2) RPM / 속도 읽기
-            rpm_value   = df.iloc[i]['Engine RPM']
-            speed_value = df.iloc[i]['Ground Speed']
++                       val_accelerator, val_brake, state)
+            
+            rpm_value = df.iloc[i]['Engine RPM']  # Engine RPM 칼럼 값
+            speed_value = df.iloc[i]['Ground Speed']  # Ground Speed 칼럼 값
             if pd.isna(speed_value):
-                speed_value = 0
-            print("rpm :", rpm_value, "speed :", speed_value)
+                speed_value = 0  # 기본값 설정
 
-            # 3) 속도 변화 계산
-            speed_change = delta_speed(speed_value)
+            print("rpm : ", rpm_value, "speed : ", speed_value)
+            # 속도 변화 계산
+            speed_change = delta_speed(speed_value)  # 속도 변화(kmh) 계산
             speed_change = round(speed_change, 1)
-
-            # 4) 상태 판단 → 사운드 재생 & MQTT 전송
+            
+            # check_info 호출하여 음성 상태 평가 및 재생
             check_info(val_accelerator, val_brake, rpm_value)
-
-            # 5) 데이터 패킷 준비
+            
+            # 현재 시간 추가
             now = datetime.now()
             data.update({
-                "carId":      "01가1234",
-                "aclPedal":   int(val_accelerator),
-                "brkPedal":   int(val_brake),
+                "carId": "01가1234",  # 차량 ID 유지
+                "aclPedal": int(val_accelerator),
+                "brkPedal": int(val_brake),
                 "createDate": now.strftime('%Y-%m-%dT%H:%M:%S'),
-                "driveState": data["driveState"],
-                "speed":      int(speed_value),
-                "rpm":        int(rpm_value),
-                "speedChange": speed_change
+                "driveState": data["driveState"],  # 기존 driveState 유지
+                "speed": int(speed_value),
+                "rpm": int(rpm_value),
+                "speedChange":speed_change  # speedChange data["kmh"]
             })
             print(data)
-
-            # ─── UI 숫자 텍스트 갱신 (after 위임) ───
+            # 레이블 업데이트 (정수 형식)
             root.after(0, lambda v=speed_value: 
-                       text_label.config(text=f"현재 : {int(v)}"))
-            root.after(0, lambda r=rpm_value: 
-                       rpm_label.config(text=f"RPM : {int(r)}"))
-
-            # 6) MQTT publish (암호화 포함)
-            json_str     = json.dumps(data, ensure_ascii=False)
++                       text_label.config(text=f"현재 : {int(v)}"))
++            root.after(0, lambda r=rpm_value: 
++                       rpm_label.config(text=f"RPM : {int(r)}"))
+            # 기존 방식
+            # client.publish('DriveLog', json.dumps(data), 0, retain=False)
+            # 혼돈신호 암호화
+            json_str = json.dumps(data, ensure_ascii=False)
             sensor_bytes = json_str.encode('utf-8')
-            packet       = encrypt_sensor_data(sensor_bytes, INITIAL_SEED)
-            b64_str      = base64.b64encode(packet).decode('utf-8')
+
+            packet = encrypt_sensor_data(sensor_bytes, INITIAL_SEED)
+            b64_str = base64.b64encode(packet).decode('utf-8')
             client.publish(TOPIC, b64_str, qos=0, retain=False)
 
-            # 7) 다음 인덱스 및 대기
             i += 1
             time.sleep(1)
 
         except Exception as error:
             print(error)
             continue
-
 
 # 쓰레드로 run_code 실행
 threading.Thread(target=run_code, daemon=True).start()
