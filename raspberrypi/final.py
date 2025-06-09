@@ -31,12 +31,6 @@ SERVER_PORT = os.getenv("PORT")
 if SERVER_PORT is None:
     raise RuntimeError(".env에 PORT가 설정되지 않았습니다.")
 SERVER_PORT = int(SERVER_PORT)
-# SERVER_IP   = os.getenv("IP", "")               
-# SERVER_PORT = os.getenv("PORT", "0")            
-
-df = pd.read_csv("/home/drc/project/DRC/raspberrypi/audi_s1.csv", sep=',')
-
-url = f"http://{SERVER_IP}:{SERVER_PORT}/data"
 
 data = {
     "carId":     "01가1234",  # 차량 ID 설정
@@ -55,12 +49,11 @@ def cleanAndExit():
     print("Bye!")
     sys.exit()
 
-print("🚀 A. HX711 인스턴스 생성")
 # 첫 번째 HX711 - 엑셀(Accelerator)
 hx1 = HX711(20, 16)
 # 두 번째 HX711 - 브레이크(Brake)
 hx2 = HX711(6, 5)
-print("🚀 B. HX711 포맷 설정")
+
 # MSB 순서로 설정
 hx1.set_reading_format("MSB", "MSB")
 hx2.set_reading_format("MSB", "MSB")
@@ -70,11 +63,9 @@ referenceUnit = 96
 hx1.set_reference_unit(referenceUnit)
 hx2.set_reference_unit(referenceUnit)
 
-print("🚀 D. HX711 초기화 (reset)")
 # 초기화 및 영점 설정
 hx1.reset()
 hx2.reset()
-print("🚀 E. HX711 영점 조정 (tare)")
 hx1.tare()
 hx2.tare()
 
