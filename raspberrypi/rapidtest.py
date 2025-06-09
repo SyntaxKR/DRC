@@ -2,7 +2,8 @@ import time
 import sys
 import RPi.GPIO as GPIO
 from datetime import datetime
-from hx711 import HX711
+from hx711_mock import HX711
+#from hx711 import HX711
 import paho.mqtt.client as mqtt
 import json
 import tkinter as tk
