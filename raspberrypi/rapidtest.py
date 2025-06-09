@@ -394,8 +394,17 @@ def delta_speed(current_speed):
 
     return kmh
 
+def get_safe_weight(hx, label):
+    try:
+        print(f"[GET_WEIGHT] {label} 측정 시작")
+        weight = hx.get_weight(5)
+        print(f"[GET_WEIGHT] {label} = {weight}g")
+        return weight
+    except Exception as e:
+        print(f"[ERROR] {label} 로드셀 읽기 실패: {e}")
+        return 0
 
-# 데이터 수집 및 업데이트 함수
+
 def run_code():
     print("🚀 run_code() 시작됨")
     i = 0
@@ -403,46 +412,47 @@ def run_code():
     previous_speed = 0
     previous_time = time.time()
 
+    # CSV 유효성 검사
+    if df is None or df.empty:
+        print("❌ CSV 데이터가 비어있습니다. 종료.")
+        return
+
     while i < len(df):
         try:
             print(f"\n[🔁 LOOP {i}]")
 
-            # 🚗 센서 데이터 읽기
-            try:
-                val_accel = hx1.get_weight(5)
-                val_brake = hx2.get_weight(5)
-                print(f"[SENSOR] 액셀: {val_accel}g, 브레이크: {val_brake}g")
+            # 👉 센서 데이터 안전하게 읽기
+            val_accel = get_safe_weight(hx1, "엑셀")
+            val_brake = get_safe_weight(hx2, "브레이크")
 
+            # 전원 주기적 리셋 (필수)
+            try:
                 hx1.power_down()
                 hx2.power_down()
                 hx1.power_up()
                 hx2.power_up()
+            except Exception as pwr_err:
+                print(f"[WARNING] 센서 전원 리셋 실패: {pwr_err}")
 
-            except Exception as sensor_error:
-                print(f"[❌ SENSOR ERROR] {sensor_error}")
-                continue
-
-            # 🧾 CSV 데이터 불러오기
+            # 👉 CSV 데이터 읽기
             try:
                 rpm_value = df.iloc[i].get('Engine RPM', 0)
                 speed_value = df.iloc[i].get('Ground Speed', 0)
                 speed_value = 0 if pd.isna(speed_value) else speed_value
-                print(f"[DATA] RPM: {rpm_value}, 속도: {speed_value}")
-            except Exception as data_error:
-                print(f"[❌ DATA ERROR] {data_error}")
+                print(f"[CSV] RPM={rpm_value}, SPEED={speed_value}")
+            except Exception as e:
+                print(f"[ERROR] CSV 로딩 실패: {e}")
+                i += 1
                 continue
 
-            # 📈 속도 변화 계산
+            # 속도 변화 계산
             speed_change = round(delta_speed(speed_value), 1)
 
-            # 🎛️ 상태 평가 및 이미지 업데이트
+            # 상태 판단 + UI 업데이트
             root.after(0, update_display_state, val_accel, val_brake, data["driveState"])
             check_info(val_accel, val_brake, rpm_value)
 
-            # 🕒 시간 기록
             now = datetime.now()
-
-            # 📡 MQTT 데이터 구성
             data.update({
                 "carId": "01가1234",
                 "aclPedal": int(val_accel),
@@ -453,13 +463,14 @@ def run_code():
                 "rpm": int(rpm_value),
                 "speedChange": speed_change
             })
-            print(f"[📦 SEND DATA] {data}")
 
-            # 📟 Tkinter UI 업데이트
+            print(f"[📦 MQTT 전송 DATA] {data}")
+
+            # UI 텍스트 업데이트
             root.after(0, lambda v=speed_value: text_label.config(text=f"현재 : {int(v)}"))
             root.after(0, lambda r=rpm_value: rpm_label.config(text=f"RPM : {int(r)}"))
 
-            # 🔐 MQTT 암호화 전송
+            # MQTT 전송
             try:
                 json_str = json.dumps(data, ensure_ascii=False)
                 sensor_bytes = json_str.encode('utf-8')
@@ -467,15 +478,16 @@ def run_code():
                 b64_str = base64.b64encode(packet).decode('utf-8')
                 client.publish(TOPIC, b64_str, qos=0, retain=False)
             except Exception as mqtt_error:
-                print(f"[❌ MQTT ERROR] {mqtt_error}")
+                print(f"[MQTT ERROR] {mqtt_error}")
 
             i += 1
             time.sleep(1)
 
-        except Exception as main_error:
-            print(f"[🔥 LOOP ERROR] {main_error}")
+        except Exception as e:
+            print(f"[🔥 LOOP ERROR] {e}")
             import traceback
             traceback.print_exc()
+            time.sleep(1)
             continue
 
 
